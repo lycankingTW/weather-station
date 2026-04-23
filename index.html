@@ -8,13 +8,9 @@
       ╔══════════════════════════════════════════════════════╗
       ║   苗栗農改場移動氣象站資料彙整報表                      ║
       ║   Copyright © 2026 林鈺荏 / 苗栗區農業改良場            ║
-      ║   All Rights Reserved.  版本：v1.1 (2026-04)          ║
+      ║   All Rights Reserved.  版本：v1.2 (2026-04)          ║
       ╚══════════════════════════════════════════════════════╝
     -->
-
-    <!-- ======================================================
-         外部函式庫（一般不需修改）
-         ====================================================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -39,10 +35,31 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
         }
-        h2 { text-align: center; color: #2c3e50; margin-top: 10px; }
 
         /* ======================================================
-           STYLE 2：列印按鈕
+           STYLE 2：Logo 與標題排版
+           ★ 若要調整 Logo 大小，修改 max-height 數值
+           ====================================================== */
+        .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0 20px 0;
+        }
+        .site-logo {
+            max-height: 80px;   /* ★ 調整此數值改變 Logo 大小 */
+            width: auto;
+            object-fit: contain;
+        }
+        .header-bar h2 {
+            margin: 0;
+            text-align: left;
+            color: #2c3e50;
+        }
+
+        /* ======================================================
+           STYLE 3：列印按鈕
            → 若要修改按鈕顏色或位置，請在此修改
            ====================================================== */
         .print-btn {
@@ -61,7 +78,7 @@
         .print-btn:hover { background-color: #2c3e50; }
 
         /* ======================================================
-           STYLE 3：參數輸入區
+           STYLE 4：參數輸入區
            → 若要新增輸入欄位的樣式，請在此修改
            ====================================================== */
         .controls {
@@ -86,8 +103,7 @@
         }
 
         /* ======================================================
-           STYLE 4：狀態訊息與摘要框
-           → 若要修改顏色或字體大小，請在此修改
+           STYLE 5：狀態訊息與摘要框
            ====================================================== */
         #statusMessage {
             text-align: center;
@@ -123,8 +139,7 @@
         }
 
         /* ======================================================
-           STYLE 5：圖表容器與群組框
-           → 若要修改圖表邊框、背景色，請在此修改
+           STYLE 6：圖表容器與群組框
            ====================================================== */
         .group-container {
             margin-top: 30px;
@@ -152,8 +167,7 @@
         }
 
         /* ======================================================
-           STYLE 6：風玫瑰圖專用樣式
-           → 若要修改風玫瑰圖的排列方式，請在此修改
+           STYLE 7：風玫瑰圖專用樣式
            ====================================================== */
         .wind-comparison-flex {
             display: flex;
@@ -180,7 +194,7 @@
         }
 
         /* ======================================================
-           STYLE 7：特殊圖表（GDD、ETo）框線
+           STYLE 8：特殊圖表框線
            ====================================================== */
         .special-wrapper { border: 2px solid #2980b9; background: #f4f9fd; }
         .chart-title {
@@ -192,13 +206,15 @@
         }
 
         /* ======================================================
-           STYLE 8：列印專用樣式
+           STYLE 9：列印專用樣式
            → 若要調整列印版面，請在此修改
            ====================================================== */
         @media print {
             body { background-color: #fff; padding: 0; }
             .container { box-shadow: none; max-width: 100%; width: 100%; margin: 0; padding: 0; }
             .controls, #statusMessage, .print-btn { display: none !important; }
+            .header-bar { margin-bottom: 10px; }
+            .site-logo { max-height: 60px; }
             .group-container { border: 1px solid #ccc; break-inside: avoid; margin-top: 20px; padding: 15px; }
             .chart-wrapper { break-inside: avoid; box-shadow: none; border: none; margin-top: 10px; padding: 5px; }
             canvas { max-height: 250px !important; }
@@ -207,12 +223,14 @@
     </style>
 </head>
 <body>
-    <!-- ======================================================
-         HTML 結構（一般不需修改）
-         ====================================================== -->
     <div class="container">
         <button class="print-btn" onclick="window.print()">🖨️ print</button>
-        <h2>苗栗農改場移動氣象站資料彙整報表</h2>
+
+        <!-- ★ Logo + 標題區塊 -->
+        <div class="header-bar">
+            <img src="img/mdares_logo.png" alt="苗栗農改場 Logo" class="site-logo">
+            <h2>苗栗農改場移動氣象站資料彙整報表</h2>
+        </div>
 
         <!-- 參數輸入區 -->
         <div class="controls">
@@ -245,9 +263,8 @@
     <script>
         /* ============================================================
            SECTION 1：【設定區】氣象欄位定義
-           ★ 若要新增欄位：在下方加一行，格式如下：
-              欄位偏移量: { code: "代碼", name: "顯示名稱", unit: "單位", color: "顏色" }
-           ★ 若要修改顏色或名稱：直接在對應行修改即可
+           ★ 若要新增欄位：在下方加一行
+           ★ 若要修改顏色或名稱：直接在對應行修改
            ============================================================ */
         const fieldOffsets = {
             1:  { code: "H_P1",    name: "測站氣壓",       unit: "hPa",   color: "#3498db" },
@@ -276,7 +293,6 @@
            SECTION 2：【設定區】圖表群組分組
            ★ 若要新增圖表群組：在下方加一行
            ★ 若要調整某群組顯示的欄位：修改 items 陣列
-           ★ items 內的數字對應 fieldOffsets 的鍵值，'GUST' 為陣風專用
            ============================================================ */
         const chartGroups = [
             { title: "💨 風力觀測區 (風向、風速與陣風)",      items: [12, 13, 'GUST'] },
@@ -312,9 +328,6 @@
 
         /* ============================================================
            SECTION 5：【工具函式】時間處理
-           ★ shiftTimeByEightHours：UTC → 台灣時間 (+8h)
-           ★ getCompassDirection：角度 → 羅盤方位文字
-           ★ formatTime：數值時間 → HH:MM 格式
            → 若測站時區有變動，修改 shiftTimeByEightHours 內的 +8
            ============================================================ */
         function shiftTimeByEightHours(dtimeRaw) {
@@ -348,8 +361,7 @@
 
         /* ============================================================
            SECTION 6：【工具函式】CSV 資料解析
-           ★ getValidVal：取得欄位數值，自動過濾無效值（空值、///、X）
-           → 若 CSV 有其他無效值格式，在此新增過濾條件
+           → 若 CSV 有其他無效值格式，在 getValidVal 新增過濾條件
            ============================================================ */
         function getValidVal(row, index) {
             if (index >= row.length) return null;
@@ -375,36 +387,17 @@
            SECTION 8：【核心運算】ETo 參考作物蒸發散量計算
            ★ 公式：FAO-56 Penman-Monteith (Allen et al., 1998)
            ★ 若要修改反射率（目前 0.23）或其他係數，請在此修改
-           ★ 參數說明：
-              Tmax/Tmin  最高/最低氣溫 (℃)
-              T_mean     日平均氣溫 (℃)
-              RHmean     平均相對溼度 (%)
-              P          大氣壓力 (kPa)
-              U_z        風速 (m/s)
-              Rs         太陽輻射 (MJ/m²/day)
-              windZ      風速計高度 (m)
-              latDeg     緯度 (°N)
-              J          年積日 (1~365)
            ============================================================ */
         function calcETo(Tmax, Tmin, T_mean, RHmean, P, U_z, Rs, windZ, latDeg, J) {
-            // 風速校正至 2m 高度
             let windFactor = 67.8 * windZ - 5.42;
             let u2 = U_z * (4.87 / Math.log(windFactor > 0 ? windFactor : 1));
-
-            // 心理濕度計常數 γ
             let gamma = 0.000665 * P;
-
-            // 飽和水氣壓斜率 Δ
             let Delta = (4098 * (0.6108 * Math.exp(17.27 * T_mean / (T_mean + 237.3))))
                         / Math.pow(T_mean + 237.3, 2);
-
-            // 飽和水氣壓 es 與實際水氣壓 ea
             let es_max = 0.6108 * Math.exp(17.27 * Tmax / (Tmax + 237.3));
             let es_min = 0.6108 * Math.exp(17.27 * Tmin / (Tmin + 237.3));
             let es = (es_max + es_min) / 2;
             let ea = es_min * (RHmean / 100);
-
-            // 地外輻射 Ra
             let lat_rad = latDeg * Math.PI / 180;
             let dr = 1 + 0.033 * Math.cos(2 * Math.PI / 365 * J);
             let delta_sun = 0.409 * Math.sin(2 * Math.PI / 365 * J - 1.39);
@@ -412,8 +405,6 @@
             let Ra = (24 * 60 / Math.PI) * 0.082 * dr *
                      (ws * Math.sin(lat_rad) * Math.sin(delta_sun) +
                       Math.cos(lat_rad) * Math.cos(delta_sun) * Math.sin(ws));
-
-            // 淨輻射 Rn
             let Rso = (0.75 + 2e-5 * 100) * Ra;
             let Rns = (1 - 0.23) * Rs; // ← 若要修改作物反射率，改 0.23
             let Rso_val = Rso > 0 ? Rso : 1;
@@ -422,8 +413,6 @@
                       (0.34 - 0.14 * Math.sqrt(ea)) *
                       (1.35 * (Rs / Rso_val) - 0.35);
             let Rn = Rns - Rnl;
-
-            // Penman-Monteith ETo
             let ETo = (0.408 * Delta * Rn + gamma * (900 / (T_mean + 273)) * u2 * (es - ea))
                       / (Delta + gamma * (1 + 0.34 * u2));
             return ETo > 0 ? parseFloat(ETo.toFixed(2)) : 0;
@@ -431,7 +420,6 @@
 
         /* ============================================================
            SECTION 9：【主程式】CSV 讀取與資料前處理
-           → 一般不需修改此區
            ============================================================ */
         function parseCSV() {
             const file = document.getElementById('csvFileInput').files[0];
@@ -449,7 +437,6 @@
 
         /* ============================================================
            SECTION 10：【主程式】資料整合與圖表渲染流程
-           → 一般不需修改此區
            ============================================================ */
         function processAllData(data) {
             const container      = document.getElementById('chartsContainer');
@@ -459,7 +446,6 @@
             chartInstances.forEach(chart => chart.destroy());
             chartInstances = [];
 
-            // 自動偵測時間欄位位置
             let dtimeIdx  = -1;
             let stationId = '未知測站';
             for (let i = 0; i < Math.min(data.length, 20); i++) {
@@ -478,19 +464,16 @@
                 return;
             }
 
-            // 讀取使用者輸入參數
             const baseTemp = parseFloat(document.getElementById('baseTempInput').value) || 10;
             const latDeg   = parseFloat(document.getElementById('latInput').value)      || 24.5;
             const windZ    = parseFloat(document.getElementById('windHeightInput').value) || 10;
 
-            // 初始化資料容器
             let timeLabels   = [];
             let columnData   = {};
             let dailySummary = {};
             let gustSpeedData = [], gustDirData = [], gustTimeData = [];
             Object.keys(fieldOffsets).forEach(offset => { columnData[offset] = []; });
 
-            // 逐行解析 CSV
             for (let i = 0; i < data.length; i++) {
                 let row = data[i];
                 if (row.length <= dtimeIdx) continue;
@@ -525,7 +508,6 @@
                     }
                 });
 
-                // 陣風資料
                 gustSpeedData.push(getValidVal(row, dtimeIdx + 17));
                 gustDirData.push(getValidVal(row, dtimeIdx + 18));
                 let rawGustTime = getValidVal(row, dtimeIdx + 19);
@@ -536,12 +518,10 @@
                     gustTimeData.push(gHour * 100 + gMin);
                 } else { gustTimeData.push(null); }
 
-                // 24小時累積雨量
                 let r24Val = getValidVal(row, dtimeIdx + 28);
                 if (r24Val !== null && r24Val > dayData.R24_max) dayData.R24_max = r24Val;
             }
 
-            // 每日指標計算（GDD、ETo、降雨）
             let dailyLabels = [], dailyGDD = [], dailyGDD_increments = [], dailyETo = [], dailyR24 = [];
             let cumulativeGDD = 0;
             let sortedDates = Object.keys(dailySummary).sort();
@@ -552,20 +532,18 @@
                 let day = dailySummary[date];
                 dailyR24.push(day.R24_max);
 
-                // GDD 計算（呼叫 SECTION 7）
                 let T_mean = (day.T_count > 0) ? (day.T_sum / day.T_count) : 0;
                 let currentDayGDD = calcDailyGDD(T_mean, baseTemp);
                 cumulativeGDD += currentDayGDD;
                 dailyGDD.push(parseFloat(cumulativeGDD.toFixed(2)));
                 dailyGDD_increments.push(currentDayGDD);
 
-                // ETo 計算（呼叫 SECTION 8）
                 let ETo_val = 0;
                 if (day.T_count > 0 && day.T_max !== -Infinity && day.T_min !== Infinity &&
                     day.RH_count > 0 && day.U_count > 0 && day.P_count > 0) {
-                    let P = (day.P_sum / day.P_count) / 10;
+                    let P   = (day.P_sum / day.P_count) / 10;
                     let U_z = day.U_sum / day.U_count;
-                    let currentDay = new Date(`${dStr}T00:00:00`);
+                    let currentDay  = new Date(`${dStr}T00:00:00`);
                     let startOfYear = new Date(currentDay.getFullYear(), 0, 0);
                     let J = Math.floor((currentDay - startOfYear) / 86400000);
                     ETo_val = calcETo(
@@ -578,9 +556,8 @@
                 dailyETo.push(ETo_val);
             });
 
-            // 摘要框顯示
             if (dailyLabels.length > 0) {
-                let lastIdx = dailyLabels.length - 1;
+                let lastIdx   = dailyLabels.length - 1;
                 let summaryEl = document.getElementById('gddSummary');
                 summaryEl.style.display = 'block';
                 summaryEl.innerHTML = `
@@ -593,7 +570,6 @@
                 `;
             }
 
-            // 渲染每日指標圖表
             let dailyGroup = document.createElement('div');
             dailyGroup.className = 'group-container';
             dailyGroup.innerHTML = '<h3 class="group-title">📊 每日指標 (降水、ET₀與積溫)</h3>';
@@ -602,7 +578,6 @@
             createDailyBarChart(dailyGroup, '每日參考蒸發散量 (ET₀) - FAO-56 PM', dailyLabels, dailyETo, '#00cec9', 'mm/day');
             createGDDLineChart(dailyGroup, '累積積溫 (GDD)', dailyLabels, dailyGDD, dailyGDD_increments, '#27ae60', '°C·日');
 
-            // 渲染各群組圖表（依 SECTION 2 設定）
             chartGroups.forEach(group => {
                 let groupDiv = document.createElement('div');
                 groupDiv.className = 'group-container';
@@ -625,9 +600,8 @@
         }
 
         /* ============================================================
-           SECTION 11：【圖表繪製】風玫瑰圖（每日對比）
-           ★ 若要修改風玫瑰圖顯示數量（預設3個），修改下方 for(let i=0; i<3 ...)
-           ★ 若要修改顏色漸層，修改 cardinalColors 物件
+           SECTION 11：【圖表繪製】風玫瑰圖
+           ★ 若要修改同時顯示數量，修改 for(let i=0; i<3 ...)
            ============================================================ */
         function createDailyWindRoseChart(container, dict, labels, dataPoints) {
             let dailyData = {};
@@ -639,15 +613,13 @@
             let availableDates = Object.keys(dailyData);
             if (availableDates.length === 0) return;
 
-            let wrapper = document.createElement('div');
+            let wrapper  = document.createElement('div');
             wrapper.className = 'chart-wrapper';
             wrapper.style.border = '1px solid #3498db';
-
             let titleDiv = document.createElement('div');
             titleDiv.className = 'chart-title';
             titleDiv.innerText = `${dict.name} (${dict.code}) - 每日資料對比`;
             wrapper.appendChild(titleDiv);
-
             let flexBox = document.createElement('div');
             flexBox.className = 'wind-comparison-flex';
             wrapper.appendChild(flexBox);
@@ -655,14 +627,8 @@
 
             const sectors = ['N (北)','NNE','NE','ENE','E (東)','ESE','SE','SSE',
                              'S (南)','SSW','SW','WSW','W (西)','WNW','NW','NNW'];
-
-            // ★ 若要修改風玫瑰顏色漸層，修改此處 RGB 值
             const cardinalColors = {
-                0:  [41, 128, 185],
-                4:  [26, 188, 156],
-                8:  [231, 76, 60],
-                12: [241, 196, 15],
-                16: [41, 128, 185]
+                0: [41,128,185], 4: [26,188,156], 8: [231,76,60], 12: [241,196,15], 16: [41,128,185]
             };
             let bgColors = [], borderColors = [];
             for (let i = 0; i < 16; i++) {
@@ -690,11 +656,9 @@
                 return counts;
             }
 
-            // ★ 若要修改同時顯示的風玫瑰數量，修改此處 i < 3
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 3; i++) { // ★ 修改此處改變風玫瑰數量
                 let itemDiv = document.createElement('div');
                 itemDiv.className = 'wind-rose-item';
-
                 let select = document.createElement('select');
                 select.className = 'date-select';
                 availableDates.forEach((d, idx) => {
@@ -704,52 +668,26 @@
                     select.appendChild(opt);
                 });
                 itemDiv.appendChild(select);
-
                 let canvas = document.createElement('canvas');
                 itemDiv.appendChild(canvas);
                 flexBox.appendChild(itemDiv);
-
                 let ctx   = canvas.getContext('2d');
                 let chart = new Chart(ctx, {
                     type: 'polarArea',
-                    data: {
-                        labels: sectors,
-                        datasets: [{
-                            label: '頻率',
-                            data: getCountsForDate(select.value),
-                            backgroundColor: bgColors,
-                            borderColor: borderColors,
-                            borderWidth: 1.5
-                        }]
-                    },
+                    data: { labels: sectors, datasets: [{ label: '頻率', data: getCountsForDate(select.value), backgroundColor: bgColors, borderColor: borderColors, borderWidth: 1.5 }] },
                     options: {
                         responsive: true,
-                        scales: {
-                            r: {
-                                startAngle: -11.25,
-                                ticks: { display: false },
-                                grid: { color: 'rgba(0,0,0,0.4)', lineWidth: 1 },
-                                angleLines: { display: true, color: 'rgba(0,0,0,0.4)', lineWidth: 1 },
-                                pointLabels: { display: true, centerPointLabels: true, font: { size: 11, weight: 'bold' } }
-                            }
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} 次` } }
-                        }
+                        scales: { r: { startAngle: -11.25, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.4)', lineWidth: 1 }, angleLines: { display: true, color: 'rgba(0,0,0,0.4)', lineWidth: 1 }, pointLabels: { display: true, centerPointLabels: true, font: { size: 11, weight: 'bold' } } } },
+                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} 次` } } }
                     }
                 });
                 chartInstances.push(chart);
-                select.addEventListener('change', (e) => {
-                    chart.data.datasets[0].data = getCountsForDate(e.target.value);
-                    chart.update();
-                });
+                select.addEventListener('change', (e) => { chart.data.datasets[0].data = getCountsForDate(e.target.value); chart.update(); });
             }
         }
 
         /* ============================================================
            SECTION 12：【圖表繪製】陣風折線圖
-           ★ 若要修改陣風圖顏色，修改 borderColor 與 backgroundColor
            ============================================================ */
         function createGustChart(container, labels, speedData, dirData, timeData) {
             if (!speedData.some(val => val !== null)) return;
@@ -764,35 +702,15 @@
             let ctx   = canvas.getContext('2d');
             let chart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '陣風',
-                        data: speedData,
-                        dirData: dirData,
-                        timeData: timeData,
-                        borderColor: '#c0392b',        // ★ 修改線條顏色
-                        backgroundColor: '#c0392b33',  // ★ 修改填充顏色
-                        borderWidth: 2, pointRadius: 3, fill: true, spanGaps: false
-                    }]
-                },
+                data: { labels: labels, datasets: [{ label: '陣風', data: speedData, dirData: dirData, timeData: timeData, borderColor: '#c0392b', backgroundColor: '#c0392b33', borderWidth: 2, pointRadius: 3, fill: true, spanGaps: false }] },
                 options: {
                     responsive: true,
                     interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: function(context) {
-                            let idx      = context.dataIndex;
-                            let speed    = context.parsed.y;
-                            let dir      = context.dataset.dirData[idx];
-                            let timeRaw  = context.dataset.timeData[idx];
-                            return ` 風速: ${speed} m/s | 方位: ${getCompassDirection(dir)} (${dir !== null ? dir + '°' : '無'}) | 時間: ${formatTime(timeRaw)}`;
-                        }}}
-                    },
-                    scales: {
-                        x: { ticks: { maxTicksLimit: 20 } },
-                        y: { title: { display: true, text: 'm/s' } }
-                    }
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) {
+                        let idx = context.dataIndex;
+                        return ` 風速: ${context.parsed.y} m/s | 方位: ${getCompassDirection(context.dataset.dirData[idx])} (${context.dataset.dirData[idx] !== null ? context.dataset.dirData[idx] + '°' : '無'}) | 時間: ${formatTime(context.dataset.timeData[idx])}`;
+                    }}}},
+                    scales: { x: { ticks: { maxTicksLimit: 20 } }, y: { title: { display: true, text: 'm/s' } } }
                 }
             });
             chartInstances.push(chart);
@@ -800,7 +718,6 @@
 
         /* ============================================================
            SECTION 13：【圖表繪製】GDD 累積積溫折線圖
-           ★ 若要修改 datalabels 字體大小，修改 font.size
            ★ 若要修改標籤顏色，修改 datalabels.color
            ============================================================ */
         function createGDDLineChart(container, title, labels, dataPoints, increments, color, unit) {
@@ -814,36 +731,13 @@
             wrapper.appendChild(titleDiv); wrapper.appendChild(canvas); container.appendChild(wrapper);
             let ctx   = canvas.getContext('2d');
             let chart = new Chart(ctx, {
-                type: 'line',
-                plugins: [ChartDataLabels],
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: title.split(' ')[0],
-                        data: dataPoints,
-                        increments: increments,
-                        borderColor: color,
-                        backgroundColor: color + '33',
-                        borderWidth: 3, pointRadius: 4, fill: true
-                    }]
-                },
+                type: 'line', plugins: [ChartDataLabels],
+                data: { labels: labels, datasets: [{ label: title.split(' ')[0], data: dataPoints, increments: increments, borderColor: color, backgroundColor: color + '33', borderWidth: 3, pointRadius: 4, fill: true }] },
                 options: {
-                    responsive: true,
-                    layout: { padding: { top: 30 } },
+                    responsive: true, layout: { padding: { top: 30 } },
                     plugins: {
-                        tooltip: { callbacks: { label: function(context) {
-                            return ` 總累積: ${context.parsed.y} ${unit} (本日新增: +${context.dataset.increments[context.dataIndex]})`;
-                        }}},
-                        datalabels: {
-                            display: true,
-                            align: 'top', offset: 6,
-                            color: '#d35400',             // ★ 修改標籤顏色
-                            font: { weight: 'bold', size: 12 }, // ★ 修改字體大小
-                            formatter: function(value, context) {
-                                let inc = context.dataset.increments[context.dataIndex];
-                                return inc > 0 ? '+' + inc : '';
-                            }
-                        }
+                        tooltip: { callbacks: { label: function(context) { return ` 總累積: ${context.parsed.y} ${unit} (本日新增: +${context.dataset.increments[context.dataIndex]})`; } } },
+                        datalabels: { display: true, align: 'top', offset: 6, color: '#d35400', font: { weight: 'bold', size: 12 }, formatter: function(value, context) { let inc = context.dataset.increments[context.dataIndex]; return inc > 0 ? '+' + inc : ''; } }
                     },
                     scales: { y: { title: { display: true, text: unit } } }
                 }
@@ -853,7 +747,7 @@
 
         /* ============================================================
            SECTION 14：【圖表繪製】每日長條圖（降雨、ETo）
-           ★ 若要修改長條圖透明度，修改 backgroundColor 的末尾 99（16進位）
+           ★ 若要修改透明度，修改 backgroundColor 末尾 99
            ============================================================ */
         function createDailyBarChart(container, title, labels, dataPoints, color, unit) {
             let wrapper  = document.createElement('div');
@@ -867,29 +761,16 @@
             let ctx   = canvas.getContext('2d');
             let chart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: title.split(' ')[0],
-                        data: dataPoints,
-                        backgroundColor: color + '99', // ★ 修改透明度：99=60%, CC=80%, FF=100%
-                        borderColor: color,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { tooltip: { callbacks: { label: c => ` ${c.parsed.y} ${unit}` } } },
-                    scales: { y: { title: { display: true, text: unit } } }
-                }
+                data: { labels: labels, datasets: [{ label: title.split(' ')[0], data: dataPoints, backgroundColor: color + '99', borderColor: color, borderWidth: 1 }] },
+                options: { responsive: true, plugins: { tooltip: { callbacks: { label: c => ` ${c.parsed.y} ${unit}` } } }, scales: { y: { title: { display: true, text: unit } } } }
             });
             chartInstances.push(chart);
         }
 
         /* ============================================================
-           SECTION 15：【圖表繪製】逐時折線圖（一般氣象欄位）
+           SECTION 15：【圖表繪製】逐時折線圖
            ★ 若要修改資料點大小，修改 pointRadius
-           ★ 若要修改 X 軸最大刻度數，修改 maxTicksLimit
+           ★ 若要修改 X 軸刻度數，修改 maxTicksLimit
            ============================================================ */
         function createHourlyChart(container, dict, labels, dataPoints) {
             if (!dataPoints.some(val => val !== null)) return;
@@ -904,30 +785,11 @@
             let ctx   = canvas.getContext('2d');
             let chart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: dict.name,
-                        data: dataPoints,
-                        borderColor: dict.color,
-                        backgroundColor: dict.color + '33',
-                        borderWidth: 2,
-                        pointRadius: 2,  // ★ 修改資料點大小
-                        fill: true,
-                        spanGaps: false
-                    }]
-                },
+                data: { labels: labels, datasets: [{ label: dict.name, data: dataPoints, borderColor: dict.color, backgroundColor: dict.color + '33', borderWidth: 2, pointRadius: 2, fill: true, spanGaps: false }] },
                 options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: c => ` ${c.parsed.y} ${dict.unit}` } }
-                    },
-                    scales: {
-                        x: { ticks: { maxTicksLimit: 20 } }, // ★ 修改 X 軸刻度數量
-                        y: { title: { display: true, text: dict.unit } }
-                    }
+                    responsive: true, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.parsed.y} ${dict.unit}` } } },
+                    scales: { x: { ticks: { maxTicksLimit: 20 } }, y: { title: { display: true, text: dict.unit } } }
                 }
             });
             chartInstances.push(chart);
